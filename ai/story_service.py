@@ -7,10 +7,12 @@ from ai.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
 
 MODEL_NAME = "gemini-3-flash-preview"
 
+_tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+_genai = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
 
 def search_facts(spot_name: str) -> str:
-    tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-    result = tavily.search(
+    result = _tavily.search(
         query=f"{spot_name} 역사 문화 유래",
         search_depth="basic",
         max_results=3,
@@ -23,8 +25,6 @@ def search_facts(spot_name: str) -> str:
 
 
 def generate_story(spot_name: str, category: str, facts: str) -> dict:
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
     contents = []
     for msg in FEW_SHOT_EXAMPLES:
         contents.append(types.Content(role=msg["role"], parts=[types.Part(text=msg["parts"][0])]))
@@ -44,7 +44,7 @@ def generate_story(spot_name: str, category: str, facts: str) -> dict:
 }}"""
     contents.append(types.Content(role="user", parts=[types.Part(text=user_prompt)]))
 
-    response = client.models.generate_content(
+    response = _genai.models.generate_content(
         model=MODEL_NAME,
         contents=contents,
         config=types.GenerateContentConfig(
