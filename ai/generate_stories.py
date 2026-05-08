@@ -14,7 +14,7 @@ from ai.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
 load_dotenv()
 
 SPOTS = [
-    {"region_id": "seongsu", "id": "seongsu_01", "name": "성수 수제화 거리", "category": "자연문화", "lat": 37.5443, "lng": 127.0557},
+    {"region_id": "seongsu", "id": "seongsu_01", "name": "성수 수제화 거리", "category": "전통문화", "lat": 37.5443, "lng": 127.0557},
     {"region_id": "seongsu", "id": "seongsu_02", "name": "서울숲", "category": "자연문화", "lat": 37.5445, "lng": 127.0374},
     {"region_id": "seongsu", "id": "seongsu_03", "name": "뚝섬 유원지", "category": "역사", "lat": 37.5300, "lng": 127.0653},
     {"region_id": "seongsu", "id": "seongsu_04", "name": "성수동 카페거리", "category": "예술문화", "lat": 37.5440, "lng": 127.0559},
