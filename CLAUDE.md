@@ -6,7 +6,7 @@
 
 ## 담당 영역
 - **BE**: FastAPI + Firebase Firestore 백엔드 서버
-- **AI**: Claude API 기반 스토리 생성 파이프라인 (Python 스크립트)
+- **AI**: Gemini API 기반 스토리 생성 파이프라인 (Python 스크립트)
 
 ## 기술 스택
 - Python, FastAPI, uvicorn
@@ -49,6 +49,11 @@ class StorySpot(BaseModel):
     story_meaning: str
     keywords: list[str]
     related_contents: list[RelatedContent]
+
+class RelatedContent(BaseModel):
+    type: str   # 책/영화/장소
+    title: str
+    description: str
 ```
 
 ## API 엔드포인트
@@ -108,5 +113,5 @@ pip install google-generativeai
 
 ## 협업 규칙
 - BE/AI 완료 기준: 로컬 테스트 통과 + Firestore 저장 확인
-- 1차 통합 체크포인트(T+5:30): Claude API로 스토리 1개 생성 확인
+- 1차 통합 체크포인트(T+5:30): Gemini API로 스토리 1개 생성 확인
 - 2차 통합 체크포인트(T+9:30): 15개 스팟 Firestore 저장 완료
