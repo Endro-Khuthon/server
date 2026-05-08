@@ -11,7 +11,10 @@ def get_db() -> firestore.Client:
     global _db
     if _db is None:
         if not firebase_admin._apps:
-            cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS"))
+            cert_path = os.getenv("FIREBASE_CREDENTIALS")
+            if not cert_path:
+                raise RuntimeError("FIREBASE_CREDENTIALS 환경변수가 설정되지 않았습니다")
+            cred = credentials.Certificate(cert_path)
             firebase_admin.initialize_app(cred)
         _db = firestore.client()
     return _db
