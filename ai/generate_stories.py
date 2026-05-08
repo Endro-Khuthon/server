@@ -1,13 +1,13 @@
 import os
+import sys
 import time
 import requests
 from dotenv import load_dotenv
 
-import sys
+load_dotenv()
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from ai.story_service import search_facts, generate_story
-
-load_dotenv()
 
 SPOTS = [
     {"region_id": "seongsu", "id": "seongsu_01", "name": "성수 수제화 거리", "category": "전통문화", "lat": 37.5443, "lng": 127.0557},
