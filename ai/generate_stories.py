@@ -1,17 +1,13 @@
 import os
 import sys
-import json
 import time
 import requests
 from dotenv import load_dotenv
-from tavily import TavilyClient
-from google import genai
-from google.genai import types
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from ai.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
 
 load_dotenv()
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from ai.story_service import search_facts, generate_story
 
 SPOTS = [
     {"region_id": "seongsu", "id": "seongsu_01", "name": "성수 수제화 거리", "category": "전통문화", "lat": 37.5443, "lng": 127.0557},
@@ -33,57 +29,6 @@ SPOTS = [
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY")
-MODEL_NAME = "gemini-3-flash-preview"
-
-
-def search_facts(tavily: TavilyClient, spot_name: str) -> str:
-    result = tavily.search(
-        query=f"{spot_name} 역사 문화 유래",
-        search_depth="basic",
-        max_results=3,
-        include_answer=True,
-    )
-    facts = result.get("answer") or ""
-    for r in result.get("results", []):
-        facts += f"\n{r.get('content', '')}"
-    return facts
-
-
-def build_contents(spot: dict, facts: str) -> list:
-    contents = []
-    for msg in FEW_SHOT_EXAMPLES:
-        role = msg["role"]
-        contents.append(types.Content(role=role, parts=[types.Part(text=msg["parts"][0])]))
-
-    user_prompt = f"""장소명: {spot['name']}
-카테고리: {spot['category']}
-수집된 사실: {facts}
-
-위 사실을 바탕으로 아래 JSON 형식으로 작성하세요:
-{{
-  "summary": "1줄 미리보기 (30자 이내)",
-  "story_past": "과거 이야기 (2~3문장)",
-  "story_present": "현재 모습 (2~3문장)",
-  "story_meaning": "문화적 의미 (2~3문장)",
-  "keywords": ["키워드1", "키워드2", "키워드3"],
-  "related_contents": [{{"type": "책/영화/장소", "title": "제목", "description": "한 줄 설명"}}]
-}}
-JSON만 출력하세요. 마크다운 코드블록 없이."""
-    contents.append(types.Content(role="user", parts=[types.Part(text=user_prompt)]))
-    return contents
-
-
-def generate_story(client: genai.Client, spot: dict, facts: str) -> dict:
-    contents = build_contents(spot, facts)
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=contents,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-        ),
-    )
-    return json.loads(response.text)
 
 
 def save_spot(spot: dict, story: dict):
@@ -105,16 +50,13 @@ def save_spot(spot: dict, story: dict):
 
 
 def main():
-    tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
     success, failed = 0, []
 
     for spot in SPOTS:
         print(f"[{spot['id']}] {spot['name']} 처리 중...")
         try:
-            facts = search_facts(tavily, spot["name"])
-            story = generate_story(client, spot, facts)
+            facts = search_facts(spot["name"])
+            story = generate_story(spot["name"], spot["category"], facts)
             save_spot(spot, story)
             print(f"  ✓ 저장 완료")
             success += 1
