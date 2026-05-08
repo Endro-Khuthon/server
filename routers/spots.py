@@ -1,8 +1,17 @@
 import os
 import secrets
 from fastapi import APIRouter, HTTPException, Header
+from pydantic import BaseModel
 from firebase_client import get_db
 from models import StorySpot, StorySpotSummary
+from ai.story_service import search_facts, generate_story
+
+
+class GenerateRequest(BaseModel):
+    name: str
+    category: str
+    lat: float
+    lng: float
 
 router = APIRouter(prefix="/regions", tags=["spots"])
 
@@ -30,6 +39,20 @@ def get_spot(region_id: str, spot_id: str):
     if not doc.exists:
         raise HTTPException(status_code=404, detail="스팟을 찾을 수 없습니다")
     return StorySpot(**doc.to_dict())
+
+
+@router.post("/{region_id}/spots/{spot_id}/generate", status_code=201)
+def generate_spot(region_id: str, spot_id: str, req: GenerateRequest, x_api_key: str = Header(...)):
+    api_key = os.getenv("API_KEY")
+    if not api_key or not secrets.compare_digest(x_api_key, api_key):
+        raise HTTPException(status_code=401, detail="인증 실패")
+    facts = search_facts(req.name)
+    story = generate_story(req.name, req.category, facts)
+    spot = StorySpot(id=spot_id, name=req.name, category=req.category, lat=req.lat, lng=req.lng, **story)
+    db = get_db()
+    db.collection("regions").document(region_id).set({}, merge=True)
+    db.collection("regions").document(region_id).collection("spots").document(spot_id).set(spot.model_dump())
+    return {"id": spot_id}
 
 
 @router.post("/{region_id}/spots", status_code=201)
