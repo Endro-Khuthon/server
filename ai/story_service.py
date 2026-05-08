@@ -113,5 +113,8 @@ lat, lng는 실제 좌표를 최대한 정확하게 입력하세요."""
             response_schema=_SpotListSchema,
         ),
     )
-    parsed = response.parsed if response.parsed else _SpotListSchema(**json.loads(response.text))
-    return parsed.spots
+    try:
+        parsed = response.parsed if response.parsed else _SpotListSchema(**json.loads(response.text))
+        return parsed.spots
+    except Exception:
+        return []
