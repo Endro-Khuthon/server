@@ -39,7 +39,7 @@ _tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 _genai = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
-def search_facts(spot_name: str) -> str:
+def search_facts(spot_name: str) -> tuple[str, list[str]]:
     result = _tavily.search(
         query=f"{spot_name} 지명 유래 역사적 사건 비하인드 스토리 과거",
         search_depth="advanced",
@@ -47,9 +47,12 @@ def search_facts(spot_name: str) -> str:
         include_answer=True,
     )
     facts = result.get("answer") or ""
+    sources = []
     for r in result.get("results", []):
         facts += f"\n{r.get('content', '')}"
-    return facts
+        if url := r.get("url"):
+            sources.append(url)
+    return facts, sources
 
 
 def generate_story(spot_name: str, category: str, facts: str) -> dict:
