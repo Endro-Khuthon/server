@@ -41,9 +41,9 @@ _genai = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def search_facts(spot_name: str) -> str:
     result = _tavily.search(
-        query=f"{spot_name} 역사 문화 유래",
-        search_depth="basic",
-        max_results=3,
+        query=f"{spot_name} 지명 유래 역사적 사건 비하인드 스토리 과거",
+        search_depth="advanced",
+        max_results=5,
         include_answer=True,
     )
     facts = result.get("answer") or ""
@@ -86,17 +86,18 @@ def generate_story(spot_name: str, category: str, facts: str) -> dict:
 
 def discover_spots(region_id: str, region_name: str) -> list[SpotInfo]:
     result = _tavily.search(
-        query=f"{region_name} 역사 문화 명소 가볼만한 곳",
-        search_depth="basic",
-        max_results=5,
+        query=f"{region_name} 지명 유래 골목 역사 숨겨진 이야기 과거 흔적",
+        search_depth="advanced",
+        max_results=10,
         include_answer=True,
     )
     raw = result.get("answer") or ""
     for r in result.get("results", []):
         raw += f"\n{r.get('content', '')}"
 
-    prompt = f"""아래는 {region_name} 지역의 문화·역사 명소 관련 검색 결과입니다.
-이 내용을 바탕으로 방문할 만한 장소를 5개 추출하세요.
+    prompt = f"""아래는 {region_name} 지역의 역사·지명 유래 관련 검색 결과입니다.
+이 내용을 바탕으로 일상 속에서 지나치기 쉽지만 흥미로운 역사나 이야기가 있는 장소를 5개 추출하세요.
+유명 관광지보다는 골목, 시장, 다리, 공터 등 평범한 일상 공간을 우선으로 선택하세요.
 
 검색 결과:
 {raw}
