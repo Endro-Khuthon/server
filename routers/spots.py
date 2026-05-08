@@ -38,6 +38,7 @@ def create_spot(region_id: str, spot: StorySpot, x_api_key: str = Header(...)):
     if not api_key or not secrets.compare_digest(x_api_key, api_key):
         raise HTTPException(status_code=401, detail="인증 실패")
     db = get_db()
+    db.collection("regions").document(region_id).set({}, merge=True)
     ref = db.collection("regions").document(region_id).collection("spots").document(spot.id)
     ref.set(spot.model_dump())
     return {"id": spot.id}
