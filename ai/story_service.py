@@ -41,9 +41,9 @@ _genai = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def search_facts(spot_name: str) -> str:
     result = _tavily.search(
-        query=f"{spot_name} 역사 문화 유래",
-        search_depth="basic",
-        max_results=3,
+        query=f"{spot_name} 지명 유래 역사적 사건 비하인드 스토리 과거",
+        search_depth="advanced",
+        max_results=5,
         include_answer=True,
     )
     facts = result.get("answer") or ""
