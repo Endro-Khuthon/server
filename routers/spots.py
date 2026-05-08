@@ -55,7 +55,7 @@ def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str =
     db = get_db()
     db.collection("regions").document(region_id).set({}, merge=True)
     def process_spot(spot_info):
-        facts = search_facts(spot_info.name)
+        facts, sources = search_facts(spot_info.name)
         story = generate_story(spot_info.name, spot_info.category, facts)
         spot = StorySpot(
             id=spot_info.id,
@@ -63,6 +63,7 @@ def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str =
             category=spot_info.category,
             lat=spot_info.lat,
             lng=spot_info.lng,
+            sources=sources,
             **story,
         )
         db.collection("regions").document(region_id).collection("spots").document(spot.id).set(spot.model_dump())
@@ -84,9 +85,17 @@ def generate_spot(region_id: str, spot_id: str, req: GenerateRequest, x_api_key:
     api_key = os.getenv("API_KEY")
     if not api_key or not secrets.compare_digest(x_api_key, api_key):
         raise HTTPException(status_code=401, detail="인증 실패")
-    facts = search_facts(req.name)
+    facts, sources = search_facts(req.name)
     story = generate_story(req.name, req.category, facts)
-    spot = StorySpot(id=spot_id, name=req.name, category=req.category, lat=req.lat, lng=req.lng, **story)
+    spot = StorySpot(
+        id=spot_id,
+        name=req.name,
+        category=req.category,
+        lat=req.lat,
+        lng=req.lng,
+        sources=sources,
+        **story,
+    )
     db = get_db()
     db.collection("regions").document(region_id).set({}, merge=True)
     db.collection("regions").document(region_id).collection("spots").document(spot_id).set(spot.model_dump())

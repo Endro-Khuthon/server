@@ -31,13 +31,14 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY")
 
 
-def save_spot(spot: dict, story: dict):
+def save_spot(spot: dict, story: dict, sources: list[str]):
     payload = {
         "id": spot["id"],
         "name": spot["name"],
         "category": spot["category"],
         "lat": spot["lat"],
         "lng": spot["lng"],
+        "sources": sources,
         **story,
     }
     res = requests.post(
@@ -55,9 +56,9 @@ def main():
     for spot in SPOTS:
         print(f"[{spot['id']}] {spot['name']} 처리 중...")
         try:
-            facts = search_facts(spot["name"])
+            facts, sources = search_facts(spot["name"])
             story = generate_story(spot["name"], spot["category"], facts)
-            save_spot(spot, story)
+            save_spot(spot, story, sources)
             print(f"  ✓ 저장 완료")
             success += 1
         except Exception as e:
