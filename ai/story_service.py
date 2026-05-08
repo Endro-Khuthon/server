@@ -1,10 +1,13 @@
 import json
 import os
+import requests as _requests
 from pydantic import BaseModel
 from tavily import TavilyClient
 from google import genai
 from google.genai import types
 from ai.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
+
+_WIKI_HEADERS = {"User-Agent": "dongne-dogam/1.0"}
 
 
 class SpotInfo(BaseModel):
@@ -122,3 +125,29 @@ lat, lng는 실제 좌표를 최대한 정확하게 입력하세요."""
         return parsed.spots
     except Exception:
         return []
+
+
+def fetch_image_url(spot_name: str) -> str:
+    try:
+        res = _requests.get(
+            "https://ko.wikipedia.org/w/api.php",
+            params={"action": "query", "list": "search", "srsearch": spot_name, "srlimit": 1, "format": "json"},
+            headers=_WIKI_HEADERS,
+            timeout=5,
+        )
+        results = res.json().get("query", {}).get("search", [])
+        if not results:
+            return ""
+        title = results[0]["title"]
+        res2 = _requests.get(
+            "https://ko.wikipedia.org/w/api.php",
+            params={"action": "query", "titles": title, "prop": "pageimages", "pithumbsize": 800, "format": "json"},
+            headers=_WIKI_HEADERS,
+            timeout=5,
+        )
+        pages = res2.json().get("query", {}).get("pages", {})
+        for p in pages.values():
+            return p.get("thumbnail", {}).get("source", "")
+    except Exception:
+        return ""
+    return ""
