@@ -1,5 +1,6 @@
 import os
 import secrets
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from firebase_client import get_db
@@ -53,23 +54,28 @@ def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str =
     spots = discover_spots(region_id, req.region_name)
     db = get_db()
     db.collection("regions").document(region_id).set({}, merge=True)
+    def process_spot(spot_info):
+        facts = search_facts(spot_info.name)
+        story = generate_story(spot_info.name, spot_info.category, facts)
+        spot = StorySpot(
+            id=spot_info.id,
+            name=spot_info.name,
+            category=spot_info.category,
+            lat=spot_info.lat,
+            lng=spot_info.lng,
+            **story,
+        )
+        db.collection("regions").document(region_id).collection("spots").document(spot.id).set(spot.model_dump())
+        return spot.id
+
     saved = []
-    for spot_info in spots:
-        try:
-            facts = search_facts(spot_info.name)
-            story = generate_story(spot_info.name, spot_info.category, facts)
-            spot = StorySpot(
-                id=spot_info.id,
-                name=spot_info.name,
-                category=spot_info.category,
-                lat=spot_info.lat,
-                lng=spot_info.lng,
-                **story,
-            )
-            db.collection("regions").document(region_id).collection("spots").document(spot.id).set(spot.model_dump())
-            saved.append(spot.id)
-        except Exception:
-            continue
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(process_spot, s): s for s in spots}
+        for future in as_completed(futures):
+            try:
+                saved.append(future.result())
+            except Exception:
+                continue
     return {"region_id": region_id, "saved": saved}
 
 
