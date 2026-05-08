@@ -46,7 +46,7 @@ def search_facts(tavily: TavilyClient, spot_name: str) -> str:
     facts = result.get("answer") or ""
     for r in result.get("results", []):
         facts += f"\n{r.get('content', '')}"
-    return facts[:2000]
+    return facts
 
 
 def build_contents(spot: dict, facts: str) -> list:
