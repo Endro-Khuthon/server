@@ -36,7 +36,7 @@ class _StorySchema(BaseModel):
     keywords: list[str]
     related_contents: list[_RelatedContent]
 
-MODEL_NAME = "gemini-3.1-flash-lite"
+MODEL_NAME = "gemini-3-flash-preview"
 
 _tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 _genai = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
