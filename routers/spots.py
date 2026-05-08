@@ -1,4 +1,5 @@
 import os
+import secrets
 from fastapi import APIRouter, HTTPException, Header
 from firebase_client import get_db
 from models import StorySpot, StorySpotSummary
@@ -31,7 +32,8 @@ def get_spot(region_id: str, spot_id: str):
 
 @router.post("/{region_id}/spots", status_code=201)
 def create_spot(region_id: str, spot: StorySpot, x_api_key: str = Header(...)):
-    if x_api_key != os.getenv("API_KEY"):
+    api_key = os.getenv("API_KEY")
+    if not api_key or not secrets.compare_digest(x_api_key, api_key):
         raise HTTPException(status_code=401, detail="인증 실패")
     db = get_db()
     ref = db.collection("regions").document(region_id).collection("spots").document(spot.id)
