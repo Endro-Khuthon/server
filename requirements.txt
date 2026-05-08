@@ -3,3 +3,5 @@ uvicorn[standard]==0.46.0
 firebase-admin==7.4.0
 pydantic==2.13.4
 python-dotenv==1.2.2
+google-genai==2.0.0
+tavily-python==0.7.24
