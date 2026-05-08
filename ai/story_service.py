@@ -1,3 +1,4 @@
+import json
 import os
 from tavily import TavilyClient
 from google import genai
@@ -51,4 +52,4 @@ def generate_story(spot_name: str, category: str, facts: str) -> dict:
             response_mime_type="application/json",
         ),
     )
-    return response.parsed or __import__("json").loads(response.text)
+    return response.parsed or json.loads(response.text)
