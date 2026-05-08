@@ -88,7 +88,7 @@ def discover_spots(region_id: str, region_name: str) -> list[SpotInfo]:
     result = _tavily.search(
         query=f"{region_name} 지명 유래 골목 역사 숨겨진 이야기 과거 흔적",
         search_depth="advanced",
-        max_results=5,
+        max_results=10,
         include_answer=True,
     )
     raw = result.get("answer") or ""
