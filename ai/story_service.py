@@ -131,21 +131,20 @@ def fetch_image_url(spot_name: str) -> str:
     try:
         res = _requests.get(
             "https://ko.wikipedia.org/w/api.php",
-            params={"action": "query", "list": "search", "srsearch": spot_name, "srlimit": 1, "format": "json"},
+            params={
+                "action": "query",
+                "generator": "search",
+                "gsrsearch": spot_name,
+                "gsrlimit": 1,
+                "prop": "pageimages",
+                "pithumbsize": 800,
+                "format": "json",
+                "redirects": 1,
+            },
             headers=_WIKI_HEADERS,
             timeout=5,
         )
-        results = res.json().get("query", {}).get("search", [])
-        if not results:
-            return ""
-        title = results[0]["title"]
-        res2 = _requests.get(
-            "https://ko.wikipedia.org/w/api.php",
-            params={"action": "query", "titles": title, "prop": "pageimages", "pithumbsize": 800, "format": "json"},
-            headers=_WIKI_HEADERS,
-            timeout=5,
-        )
-        pages = res2.json().get("query", {}).get("pages", {})
+        pages = res.json().get("query", {}).get("pages", {})
         for p in pages.values():
             return p.get("thumbnail", {}).get("source", "")
     except Exception:
