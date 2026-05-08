@@ -20,6 +20,7 @@ class StorySpot(BaseModel):
     keywords: list[str]
     related_contents: list[RelatedContent]
     sources: list[str] = []
+    image_url: str = ""
 
 
 class StorySpotSummary(BaseModel):
