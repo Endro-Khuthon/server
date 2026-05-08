@@ -50,7 +50,7 @@ def search_facts(spot_name: str) -> tuple[str, list[str]]:
     sources = []
     for r in result.get("results", []):
         facts += f"\n{r.get('content', '')}"
-        if url := r.get("url"):
+        if (url := r.get("url")) and url not in sources:
             sources.append(url)
     return facts, sources
 
