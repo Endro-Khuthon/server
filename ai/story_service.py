@@ -1,9 +1,25 @@
 import json
 import os
+from pydantic import BaseModel
 from tavily import TavilyClient
 from google import genai
 from google.genai import types
 from ai.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
+
+
+class _RelatedContent(BaseModel):
+    type: str
+    title: str
+    description: str
+
+
+class _StorySchema(BaseModel):
+    summary: str
+    story_past: str
+    story_present: str
+    story_meaning: str
+    keywords: list[str]
+    related_contents: list[_RelatedContent]
 
 MODEL_NAME = "gemini-3-flash-preview"
 
@@ -50,6 +66,7 @@ def generate_story(spot_name: str, category: str, facts: str) -> dict:
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             response_mime_type="application/json",
+            response_schema=_StorySchema,
         ),
     )
-    return response.parsed or json.loads(response.text)
+    return response.parsed.model_dump() if response.parsed else json.loads(response.text)
