@@ -32,7 +32,7 @@ def get_regions():
 def get_spots(region_id: str):
     db = get_db()
     docs = db.collection("regions").document(region_id).collection("spots").select(
-        ["id", "name", "category", "lat", "lng", "summary"]
+        ["id", "name", "category", "lat", "lng", "summary", "image_url"]
     ).stream()
     return [StorySpotSummary(**doc.to_dict()) for doc in docs]
 
