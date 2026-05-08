@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from firebase_client import get_db
 from models import StorySpot, StorySpotSummary
-from ai.story_service import search_facts, generate_story, discover_spots
+from ai.story_service import search_facts, generate_story, discover_spots, fetch_image_url
 
 
 class GenerateRequest(BaseModel):
@@ -57,6 +57,7 @@ def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str =
     def process_spot(spot_info):
         facts, sources = search_facts(spot_info.name)
         story = generate_story(spot_info.name, spot_info.category, facts)
+        image_url = fetch_image_url(spot_info.name)
         spot = StorySpot(
             id=spot_info.id,
             name=spot_info.name,
@@ -64,6 +65,7 @@ def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str =
             lat=spot_info.lat,
             lng=spot_info.lng,
             sources=sources,
+            image_url=image_url,
             **story,
         )
         db.collection("regions").document(region_id).collection("spots").document(spot.id).set(spot.model_dump())
@@ -87,6 +89,7 @@ def generate_spot(region_id: str, spot_id: str, req: GenerateRequest, x_api_key:
         raise HTTPException(status_code=401, detail="인증 실패")
     facts, sources = search_facts(req.name)
     story = generate_story(req.name, req.category, facts)
+    image_url = fetch_image_url(req.name)
     spot = StorySpot(
         id=spot_id,
         name=req.name,
@@ -94,6 +97,7 @@ def generate_spot(region_id: str, spot_id: str, req: GenerateRequest, x_api_key:
         lat=req.lat,
         lng=req.lng,
         sources=sources,
+        image_url=image_url,
         **story,
     )
     db = get_db()

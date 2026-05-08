@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from ai.story_service import search_facts, generate_story
+from ai.story_service import search_facts, generate_story, fetch_image_url
 
 SPOTS = [
     {"region_id": "seongsu", "id": "seongsu_01", "name": "성수 수제화 거리", "category": "전통문화", "lat": 37.5443, "lng": 127.0557},
@@ -31,7 +31,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY")
 
 
-def save_spot(spot: dict, story: dict, sources: list[str]):
+def save_spot(spot: dict, story: dict, sources: list[str], image_url: str = ""):
     payload = {
         "id": spot["id"],
         "name": spot["name"],
@@ -39,6 +39,7 @@ def save_spot(spot: dict, story: dict, sources: list[str]):
         "lat": spot["lat"],
         "lng": spot["lng"],
         "sources": sources,
+        "image_url": image_url,
         **story,
     }
     res = requests.post(
@@ -58,7 +59,8 @@ def main():
         try:
             facts, sources = search_facts(spot["name"])
             story = generate_story(spot["name"], spot["category"], facts)
-            save_spot(spot, story, sources)
+            image_url = fetch_image_url(spot["name"])
+            save_spot(spot, story, sources, image_url)
             print(f"  ✓ 저장 완료")
             success += 1
         except Exception as e:
