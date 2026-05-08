@@ -1,10 +1,11 @@
 import os
 import secrets
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from firebase_client import get_db
 from models import StorySpot, StorySpotSummary
-from ai.story_service import search_facts, generate_story
+from ai.story_service import search_facts, generate_story, discover_spots
 
 
 class GenerateRequest(BaseModel):
@@ -12,6 +13,10 @@ class GenerateRequest(BaseModel):
     category: str
     lat: float
     lng: float
+
+
+class RegionGenerateRequest(BaseModel):
+    region_name: str
 
 router = APIRouter(prefix="/regions", tags=["spots"])
 
@@ -39,6 +44,39 @@ def get_spot(region_id: str, spot_id: str):
     if not doc.exists:
         raise HTTPException(status_code=404, detail="스팟을 찾을 수 없습니다")
     return StorySpot(**doc.to_dict())
+
+
+@router.post("/{region_id}/generate", status_code=201)
+def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str = Header(...)):
+    api_key = os.getenv("API_KEY")
+    if not api_key or not secrets.compare_digest(x_api_key, api_key):
+        raise HTTPException(status_code=401, detail="인증 실패")
+    spots = discover_spots(region_id, req.region_name)
+    db = get_db()
+    db.collection("regions").document(region_id).set({}, merge=True)
+    def process_spot(spot_info):
+        facts = search_facts(spot_info.name)
+        story = generate_story(spot_info.name, spot_info.category, facts)
+        spot = StorySpot(
+            id=spot_info.id,
+            name=spot_info.name,
+            category=spot_info.category,
+            lat=spot_info.lat,
+            lng=spot_info.lng,
+            **story,
+        )
+        db.collection("regions").document(region_id).collection("spots").document(spot.id).set(spot.model_dump())
+        return spot.id
+
+    saved = []
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(process_spot, s): s for s in spots}
+        for future in as_completed(futures):
+            try:
+                saved.append(future.result())
+            except Exception:
+                continue
+    return {"region_id": region_id, "saved": saved}
 
 
 @router.post("/{region_id}/spots/{spot_id}/generate", status_code=201)

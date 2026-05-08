@@ -7,6 +7,18 @@ from google.genai import types
 from ai.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
 
 
+class SpotInfo(BaseModel):
+    id: str
+    name: str
+    category: str
+    lat: float
+    lng: float
+
+
+class _SpotListSchema(BaseModel):
+    spots: list[SpotInfo]
+
+
 class _RelatedContent(BaseModel):
     type: str
     title: str
@@ -70,3 +82,39 @@ def generate_story(spot_name: str, category: str, facts: str) -> dict:
         ),
     )
     return response.parsed.model_dump() if response.parsed else json.loads(response.text)
+
+
+def discover_spots(region_id: str, region_name: str) -> list[SpotInfo]:
+    result = _tavily.search(
+        query=f"{region_name} 역사 문화 명소 가볼만한 곳",
+        search_depth="basic",
+        max_results=5,
+        include_answer=True,
+    )
+    raw = result.get("answer") or ""
+    for r in result.get("results", []):
+        raw += f"\n{r.get('content', '')}"
+
+    prompt = f"""아래는 {region_name} 지역의 문화·역사 명소 관련 검색 결과입니다.
+이 내용을 바탕으로 방문할 만한 장소를 5개 추출하세요.
+
+검색 결과:
+{raw}
+
+각 장소의 id는 "{region_id}_01", "{region_id}_02" 형식으로 지정하세요.
+category는 역사/건축/인물/전통문화/예술문화/자연문화 중 하나로 지정하세요.
+lat, lng는 실제 좌표를 최대한 정확하게 입력하세요."""
+
+    response = _genai.models.generate_content(
+        model=MODEL_NAME,
+        contents=[types.Content(role="user", parts=[types.Part(text=prompt)])],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=_SpotListSchema,
+        ),
+    )
+    try:
+        parsed = response.parsed if response.parsed else _SpotListSchema(**json.loads(response.text))
+        return parsed.spots
+    except Exception:
+        return []
