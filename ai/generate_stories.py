@@ -33,7 +33,7 @@ SPOTS = [
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY")
-MODEL_NAME = "gemini-1.5-flash"
+MODEL_NAME = "gemini-3-flash-preview"
 
 
 def search_facts(tavily: TavilyClient, spot_name: str) -> str:
