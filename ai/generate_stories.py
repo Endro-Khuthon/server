@@ -31,7 +31,7 @@ SPOTS = [
     {"region_id": "jongno",  "id": "jongno_05",  "name": "탑골공원", "category": "역사", "lat": 37.5722, "lng": 126.9872},
 ]
 
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY")
 MODEL_NAME = "gemini-3-flash-preview"
 
