@@ -19,6 +19,7 @@ class StorySpot(BaseModel):
     story_meaning: str
     keywords: list[str]
     related_contents: list[RelatedContent]
+    sources: list[str] = []
 
 
 class StorySpotSummary(BaseModel):
