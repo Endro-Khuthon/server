@@ -78,14 +78,12 @@ def generate_story(client: genai.Client, spot: dict, facts: str) -> dict:
     response = client.models.generate_content(
         model=MODEL_NAME,
         contents=contents,
-        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            response_mime_type="application/json",
+        ),
     )
-    text = response.text.strip()
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-    return json.loads(text.strip())
+    return json.loads(response.text)
 
 
 def save_spot(spot: dict, story: dict):
