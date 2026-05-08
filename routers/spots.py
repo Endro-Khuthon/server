@@ -68,8 +68,8 @@ def generate_region(region_id: str, req: RegionGenerateRequest, x_api_key: str =
             )
             db.collection("regions").document(region_id).collection("spots").document(spot.id).set(spot.model_dump())
             saved.append(spot.id)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"{spot_info.name} 생성 실패: {e}")
+        except Exception:
+            continue
     return {"region_id": region_id, "saved": saved}
 
 
