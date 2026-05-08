@@ -31,7 +31,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_KEY = os.getenv("API_KEY")
 
 
-def save_spot(spot: dict, story: dict, sources: list):
+def save_spot(spot: dict, story: dict, sources: list[str]):
     payload = {
         "id": spot["id"],
         "name": spot["name"],
