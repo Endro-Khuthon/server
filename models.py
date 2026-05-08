@@ -30,3 +30,4 @@ class StorySpotSummary(BaseModel):
     lat: float
     lng: float
     summary: str
+    image_url: str = ""
